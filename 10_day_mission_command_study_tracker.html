@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10-Day Mission Command & Study Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        oled: '#030303',
+                        panel: '#0b0c10',
+                        panelBorder: '#1a1d26',
+                        neonCyan: '#00f2fe',
+                        neonBlue: '#4facfe',
+                        neonGold: '#ffd700',
+                        neonGreen: '#00ff87'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #030303;
+            color: #e5e7eb;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .neon-cyan-glow {
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+        }
+        .neon-gold-glow {
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        }
+        .cyber-card {
+            background: linear-gradient(145deg, #0b0c10 0%, #07080a 100%);
+            border: 1px solid #1a1d26;
+            transition: all 0.25s ease;
+        }
+        .cyber-card:hover {
+            border-color: rgba(0, 242, 254, 0.4);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030303;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f2fe;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(0, 242, 254, 0.8); box-shadow: 0 0 12px rgba(0, 242, 254, 0.3); }
+            50% { border-color: rgba(0, 242, 254, 0.2); box-shadow: 0 0 4px rgba(0, 242, 254, 0.1); }
+        }
+        .active-slot-glow {
+            animation: pulse-border 2.5s infinite ease-in-out;
+        }
+        .day-tab-active {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(79, 172, 254, 0.05));
+            border-color: #00f2fe !important;
+            color: #00f2fe !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-neonCyan selection:text-black">
+
+    <!-- Top Live Notification Toast Banner -->
+    <div id="liveToast" class="fixed top-4 right-4 z-50 hidden max-w-sm w-full bg-[#0d1117] border-l-4 border-neonCyan text-white p-4 rounded-xl shadow-2xl neon-cyan-glow transition-all duration-300">
+        <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-neonCyan animate-ping"></span>
+                <h4 id="toastTitle" class="font-bold text-sm text-neonCyan tracking-wide">AI BROTHER PING</h4>
+            </div>
+            <button onclick="hideToast()" class="text-gray-400 hover:text-white text-xs"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p id="toastMessage" class="text-xs text-gray-200 mt-1.5 leading-relaxed"></p>
+    </div>
+
+    <!-- Header Navigation Bar -->
+    <header class="sticky top-0 z-30 bg-[#030303]/90 backdrop-blur-md border-b border-panelBorder px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand & Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-neonCyan to-blue-600 flex items-center justify-center text-black font-extrabold text-lg shadow-lg neon-cyan-glow">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-extrabold text-base sm:text-lg tracking-tight text-white">MISSION COMMAND <span class="text-neonCyan font-mono text-xs px-2 py-0.5 bg-neonCyan/10 border border-neonCyan/30 rounded-full">10-DAY PLAN</span></h1>
+                    </div>
+                    <p class="text-xs text-gray-400">DAV Diary Homework & Zero-Stress Focus Workspace</p>
+                </div>
+            </div>
+
+            <!-- Live Clock, Peace Shield & API Key Controls -->
+            <div class="flex items-center flex-wrap gap-2 sm:gap-3">
+                <!-- Live Clock Pill -->
+                <div class="bg-panel border border-panelBorder px-3 py-1.5 rounded-xl flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-neonCyan text-xs"></i>
+                    <span id="liveClock" class="font-mono text-xs sm:text-sm font-bold text-white">--:--:--</span>
+                    <span id="activeSlotBadge" class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-neonGold/15 text-neonGold border border-neonGold/30">Slot</span>
+                </div>
+
+                <!-- Peace Shield (Noise Blocker) Toggle -->
+                <button id="peaceShieldBtn" onclick="togglePeaceShield()" class="px-3 py-1.5 rounded-xl bg-panel border border-panelBorder hover:border-neonCyan text-xs font-semibold flex items-center gap-2 transition-all" title="Blocks background noise at home with soothing ambient drone">
+                    <i id="peaceIcon" class="fa-solid fa-headphones text-gray-400"></i>
+                    <span id="peaceText" class="hidden sm:inline text-gray-300">Peace Shield: OFF</span>
+                </button>
+
+                <!-- Gemini API Settings Button -->
+                <button onclick="toggleApiModal()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-neonCyan/20 to-blue-500/20 border border-neonCyan/50 hover:border-neonCyan text-neonCyan text-xs font-bold flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-key"></i>
+                    <span id="apiStatusLabel">Gemini API</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+        <!-- LEFT COLUMN: 10-Day Checklist & Ready Study Notes (7 cols on large) -->
+        <section class="lg:col-span-7 flex flex-col gap-5">
+
+            <!-- Overall Progress & XP Bar Card -->
+            <div class="cyber-card rounded-2xl p-4 sm:p-5">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-3">
+                    <div>
+                        <span class="text-[11px] font-mono uppercase tracking-wider text-neonCyan font-semibold">Overall 10-Day Campaign</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                            Homework Conqueror Status
+                        </h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="bg-black/60 border border-neonGold/40 px-3 py-1.5 rounded-xl flex items-center gap-2 neon-gold-glow">
+                            <i class="fa-solid fa-fire text-neonGold text-sm"></i>
+                            <div>
+                                <div class="text-[10px] text-gray-400 leading-none">XP EARNED</div>
+                                <div id="xpCounter" class="font-mono font-bold text-sm text-neonGold">0 XP</div>
+                            </div>
+                        </div>
+                        <div class="bg-black/60 border border-neonCyan/40 px-3 py-1.5 rounded-xl text-right">
+                            <div class="text-[10px] text-gray-400 leading-none">COMPLETED</div>
+                            <div id="overallPercentText" class="font-mono font-bold text-sm text-neonCyan">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full h-3 bg-black rounded-full overflow-hidden border border-gray-800 p-0.5">
+                    <div id="overallProgressBar" class="h-full bg-gradient-to-r from-neonCyan via-blue-400 to-neonGold rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between items-center mt-2 text-xs text-gray-400">
+                    <span id="completedCountText">0 of 20 missions done</span>
+                    <button onclick="openNotesModal('all')" class="text-neonGold hover:underline flex items-center gap-1 font-medium">
+                        <i class="fa-solid fa-book-open"></i> Open Full Study Cheat-Sheet (Shakespeare & Maths)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 10-Day Selector Ribbon -->
+            <div class="cyber-card rounded-2xl p-3">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-calendar-day text-neonCyan mr-1"></i> Select Mission Day (Day 1 - Day 10)</span>
+                    <span id="currentDayBadge" class="text-xs font-mono text-neonCyan">Day 1 Active</span>
+                </div>
+                <div id="dayTabsContainer" class="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+                    <!-- Rendered via JS -->
+                </div>
+            </div>
+
+            <!-- Selected Day Mission Checklist Card -->
+            <div class="cyber-card rounded-2xl p-4 sm:p-5 flex-1 flex flex-col justify-between">
+                <div>
+                    <div class="flex flex-wrap items-start justify-between gap-2 pb-4 border-b border-panelBorder">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span id="dayHeaderNumber" class="px-2.5 py-0.5 rounded-md bg-neonCyan text-black font-mono font-bold text-xs">DAY 1</span>
+                                <span id="dayFocusTag" class="text-xs font-mono text-neonGold bg-neonGold/10 px-2 py-0.5 rounded border border-neonGold/20">Maths A4 Sheet - Part 1</span>
+                            </div>
+                            <h3 id="dayHeaderTitle" class="text-base sm:text-lg font-bold text-white mt-1.5">Algebraic Definitions Part 1</h3>
+                            <p id="dayHeaderSubtitle" class="text-xs text-gray-400 mt-0.5">Chote steps mein karenge, sirf 20 minute ka kaam hai bhai!</p>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button id="dayCheatSheetBtn" onclick="openNotesModal('current')" class="px-3 py-1.5 rounded-xl bg-neonGold/15 hover:bg-neonGold/25 text-neonGold border border-neonGold/40 text-xs font-bold flex items-center gap-1.5 transition-all">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Show Ready Notes
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Checklist Items List -->
+                    <div id="taskListContainer" class="my-4 space-y-2.5">
+                        <!-- Tasks dynamically injected -->
+                    </div>
+                </div>
+
+                <!-- Add Custom Task Input -->
+                <div class="pt-3 border-t border-panelBorder mt-2">
+                    <form onsubmit="addCustomTask(event)" class="flex gap-2">
+                        <input type="text" id="newTaskInput" placeholder="Add apna khud ka chota task for this day..." class="flex-1 bg-black/80 border border-panelBorder focus:border-neonCyan rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder-gray-500 outline-none">
+                        <button type="submit" class="px-4 py-2 rounded-xl bg-neonCyan hover:bg-cyan-300 text-black font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all shrink-0">
+                            <i class="fa-solid fa-plus"></i> Add Task
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Homework Reference Cards (Diary Snapshot) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="cyber-card rounded-2xl p-4 border-l-4 border-l-neonCyan">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono uppercase text-neonCyan font-bold">English Diary H.W.</span>
+                        <button onclick="openNotesModal('english')" class="text-xs text-neonCyan hover:underline">View Chart Content →</button>
+                    </div>
+                    <p class="text-xs text-gray-300 mt-1.5 leading-relaxed">
+                        Write biography of <strong>William Shakespeare</strong> along with any of his poems on chart paper (including his picture).
+                    </p>
+                </div>
+                <div class="cyber-card rounded-2xl p-4 border-l-4 border-l-neonGold">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono uppercase text-neonGold font-bold">Maths Diary H.W.</span>
+                        <button onclick="openNotesModal('maths')" class="text-xs text-neonGold hover:underline">View Definitions →</button>
+                    </div>
+                    <p class="text-xs text-gray-300 mt-1.5 leading-relaxed">
+                        Definitions with examples on <strong>A4 colorful sheet</strong> (Algebraic Exp, Like/Unlike, Constant, Variable, Monomial to Quadrinomial) + Ch-5 & 6.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: AI Buddy Live Chat & Live Timeline + Noise-Free Timer (5 cols on large) -->
+        <section class="lg:col-span-5 flex flex-col gap-5">
+
+            <!-- AI Study Brother / Live Command Panel -->
+            <div class="cyber-card rounded-2xl p-4 flex flex-col h-[430px] border border-neonCyan/30 relative overflow-hidden">
+                <!-- Header -->
+                <div class="flex items-center justify-between pb-3 border-b border-panelBorder">
+                    <div class="flex items-center gap-2.5">
+                        <div class="relative">
+                            <div class="w-9 h-9 rounded-xl bg-neonCyan/15 border border-neonCyan flex items-center justify-center text-neonCyan">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <span class="w-2.5 h-2.5 rounded-full bg-neonGreen absolute -bottom-0.5 -right-0.5 border-2 border-black"></span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-white flex items-center gap-1.5">
+                                AI Bade Bhai <span class="text-[10px] font-mono bg-neonCyan/10 text-neonCyan px-1.5 py-0.5 rounded">LIVE SYNC</span>
+                            </h3>
+                            <p id="aiSubStatus" class="text-[11px] text-gray-400">Connected to your 10-Day Timeline</p>
+                        </div>
+                    </div>
+
+                    <button onclick="syncLiveTimelineWithAI()" id="syncBtn" class="px-3 py-1.5 rounded-xl bg-neonCyan text-black hover:bg-cyan-300 font-bold text-xs flex items-center gap-1.5 shadow-md transition-all">
+                        <i class="fa-solid fa-bolt"></i> Sync Live Timeline
+                    </button>
+                </div>
+
+                <!-- Quick Prompt Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto py-2 border-b border-panelBorder/60 no-scrollbar">
+                    <button onclick="sendQuickPrompt('Ghar me shor ho raha hai, 5 minute me kaunsa chota kaam nipatau?')" class="shrink-0 text-[11px] bg-black/70 hover:bg-neonCyan/20 border border-panelBorder hover:border-neonCyan/40 text-gray-300 px-2.5 py-1 rounded-lg transition-all">
+                        🎧 Ghar me shor hai, kya karu?
+                    </button>
+                    <button onclick="sendQuickPrompt('Shakespeare ki short biography aur poem chart paper ke liye de de bhai')" class="shrink-0 text-[11px] bg-black/70 hover:bg-neonCyan/20 border border-panelBorder hover:border-neonCyan/40 text-gray-300 px-2.5 py-1 rounded-lg transition-all">
+                        📜 Shakespeare Chart Points
+                    </button>
+                    <button onclick="sendQuickPrompt('Maths Ch-5 aur Algebraic expressions ke easy examples samjha de')" class="shrink-0 text-[11px] bg-black/70 hover:bg-neonCyan/20 border border-panelBorder hover:border-neonCyan/40 text-gray-300 px-2.5 py-1 rounded-lg transition-all">
+                        📐 Algebra Easy Examples
+                    </button>
+                </div>
+
+                <!-- Messages Stream -->
+                <div id="chatMessages" class="flex-1 overflow-y-auto py-3 space-y-3 pr-1 text-xs sm:text-sm">
+                    <!-- Initial message injected by JS -->
+                </div>
+
+                <!-- Chat Input Form -->
+                <form onsubmit="handleUserChat(event)" class="pt-2 border-t border-panelBorder flex gap-2">
+                    <input type="text" id="chatInput" placeholder="Apne AI Bhai se puch (e.g., Monomial kya hota hai?)..." class="flex-1 bg-black border border-panelBorder focus:border-neonCyan rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none">
+                    <button type="submit" id="sendChatBtn" class="px-3.5 py-2 rounded-xl bg-neonCyan text-black font-bold text-xs hover:bg-cyan-300 transition-all">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Live Daily Peaceful Timeline & Smart Alert System -->
+            <div class="cyber-card rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <span class="text-[10px] font-mono uppercase text-neonGold tracking-wider">Smart Daily Schedule</span>
+                        <h3 class="text-sm font-bold text-white">Quiet Pocket Timeline (IST)</h3>
+                    </div>
+                    <button onclick="requestBrowserNotifications()" id="notifBtn" class="text-[11px] px-2.5 py-1 rounded-lg bg-panel border border-panelBorder hover:border-neonGold text-gray-300 flex items-center gap-1">
+                        <i class="fa-regular fa-bell text-neonGold"></i> <span id="notifBtnText">Enable Alerts</span>
+                    </button>
+                </div>
+
+                <div id="timelineSlotsContainer" class="space-y-2">
+                    <!-- Rendered dynamically based on real time -->
+                </div>
+            </div>
+
+            <!-- 15-Min Micro-Sprint Timer + Calm Synth Controls -->
+            <div class="cyber-card rounded-2xl p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-mono uppercase text-neonCyan">Zero-Pressure Sprint</span>
+                        <h4 class="text-sm font-bold text-white">15-Min Stealth Focus Timer</h4>
+                        <p class="text-[11px] text-gray-400">Sirf 15 min baith, 1 definition likh aur break le!</p>
+                    </div>
+                    <div id="sprintTimerDisplay" class="font-mono text-2xl font-extrabold text-neonCyan bg-black px-3.5 py-1.5 rounded-xl border border-neonCyan/30">
+                        15:00
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 mt-3">
+                    <button onclick="toggleSprintTimer()" id="sprintStartBtn" class="flex-1 py-2 rounded-xl bg-neonCyan text-black font-bold text-xs hover:bg-cyan-300 transition-all">
+                        <i class="fa-solid fa-play mr-1"></i> Start 15-Min Sprint
+                    </button>
+                    <button onclick="resetSprintTimer()" class="px-3 py-2 rounded-xl bg-black border border-panelBorder text-gray-400 hover:text-white text-xs">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                    <button onclick="togglePeaceShield()" class="px-3 py-2 rounded-xl bg-black border border-neonGold/40 text-neonGold hover:bg-neonGold/10 text-xs font-semibold flex items-center gap-1" title="Calm Brown/Lo-Fi Drone to block noise">
+                        <i class="fa-solid fa-wave-square"></i> <span id="shieldMiniStatus">Calm Sound</span>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- MODAL 1: Gemini API Key Settings Drawer -->
+    <div id="apiModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="cyber-card rounded-2xl max-w-md w-full p-5 border border-neonCyan/50 shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-panelBorder">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-key text-neonCyan"></i>
+                    <h3 class="font-bold text-base text-white">Gemini API Configuration</h3>
+                </div>
+                <button onclick="toggleApiModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="py-4 space-y-4 text-xs">
+                <p class="text-gray-300 leading-relaxed">
+                    Apni personal <strong>Google Gemini API Key</strong> yahan enter karo. Yeh key sirf tere browser ke <code class="text-neonCyan">localStorage</code> mein safe rahegi aur live timeline + AI Bhai chat ko power karegi.
+                </p>
+
+                <div>
+                    <label class="block text-gray-400 font-semibold mb-1">Your Gemini API Key:</label>
+                    <div class="flex gap-2">
+                        <input type="password" id="apiKeyInput" placeholder="AIzaSyYourGeminiKeyHere..." class="flex-1 bg-black border border-panelBorder focus:border-neonCyan rounded-xl px-3 py-2 text-white font-mono text-xs outline-none">
+                        <button type="button" onclick="toggleKeyVisibility()" class="px-3 py-2 rounded-xl bg-black border border-panelBorder text-gray-400 hover:text-white">
+                            <i class="fa-regular fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 font-semibold mb-1">Gemini Model:</label>
+                    <select id="geminiModelSelect" class="w-full bg-black border border-panelBorder focus:border-neonCyan rounded-xl px-3 py-2 text-white font-mono text-xs outline-none">
+                        <option value="gemini-2.5-flash">gemini-2.5-flash (Recommended Fast & Smart)</option>
+                        <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
+                    </select>
+                </div>
+
+                <div class="bg-neonCyan/5 border border-neonCyan/20 rounded-xl p-3 text-[11px] text-gray-300 space-y-1">
+                    <div class="font-bold text-neonCyan"><i class="fa-solid fa-circle-info mr-1"></i> Don't have a key right now?</div>
+                    <p>Koi tension nahi! Agar key khali chhodoge toh bhi app <strong>Built-in Environment / Offline Smart Brother Mode</strong> mein 100% kaam karega.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-panelBorder">
+                <button onclick="clearApiKey()" class="px-3 py-2 rounded-xl bg-red-950/50 border border-red-800/50 text-red-300 text-xs hover:bg-red-900/50">
+                    Clear Key
+                </button>
+                <button onclick="saveApiKey()" class="px-4 py-2 rounded-xl bg-neonCyan text-black font-bold text-xs hover:bg-cyan-300">
+                    Save & Connect Live
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Ready-to-Copy Study Cheat-Sheet (Shakespeare & Maths A4 Notes) -->
+    <div id="notesModal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="cyber-card rounded-2xl max-w-3xl w-full max-h-[88vh] flex flex-col border border-neonGold/50 shadow-2xl">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-panelBorder">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-scroll text-neonGold"></i>
+                    <h3 class="font-bold text-base text-white">Ready-to-Write Homework Notes (Seedha Copy Kar Lo!)</h3>
+                </div>
+                <button onclick="closeNotesModal()" class="text-gray-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Filter Tabs inside Modal -->
+            <div class="flex gap-2 px-4 pt-3 border-b border-panelBorder bg-black/40">
+                <button onclick="switchNotesTab('maths')" id="tabBtnMaths" class="px-4 py-2 text-xs font-bold border-b-2 border-neonGold text-neonGold">
+                    📐 Maths A4 Sheet & Ch-5 Formulas
+                </button>
+                <button onclick="switchNotesTab('english')" id="tabBtnEnglish" class="px-4 py-2 text-xs font-bold border-b-2 border-transparent text-gray-400 hover:text-white">
+                    📜 English Shakespeare Chart Paper
+                </button>
+            </div>
+
+            <!-- Modal Body Content -->
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs sm:text-sm leading-relaxed">
+                
+                <!-- MATHS TAB CONTENT -->
+                <div id="notesMathsContent" class="space-y-4">
+                    <div class="bg-neonGold/10 border border-neonGold/30 rounded-xl p-3 flex items-center justify-between">
+                        <span class="text-neonGold font-semibold"><i class="fa-solid fa-lightbulb mr-1"></i> Tip: Colorful A4 sheet par heading sketch pen se aur example alag color pen se likhna!</span>
+                        <button onclick="copyElementText('mathsCopyBlock')" class="px-3 py-1 rounded-lg bg-neonGold text-black font-bold text-xs shrink-0 hover:bg-yellow-400">
+                            <i class="fa-regular fa-copy mr-1"></i> Copy All
+                        </button>
+                    </div>
+
+                    <div id="mathsCopyBlock" class="space-y-3 font-sans">
+                        <div class="p-3.5 rounded-xl bg-black border border-panelBorder">
+                            <h4 class="font-bold text-neonCyan">1. Algebraic Expression (Day 1)</h4>
+                            <p class="text-gray-300 mt-1"><strong>Definition:</strong> A combination of constants and variables connected by fundamental mathematical operations ($+$, $-$, $\times$, $\div$) is called an Algebraic Expression.</p>
+                            <p class="text-neonGold font-mono text-xs mt-1">Example: 4x + 7, 3a² - 5b + 9</p>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-black border border-panelBorder">
+                            <h4 class="font-bold text-neonCyan">2. Constants & Variables (Day 1)</h4>
+                            <p class="text-gray-300 mt-1"><strong>Constant:</strong> A symbol having a fixed numerical value is called a constant.<br><span class="text-neonGold font-mono text-xs">Example: 5, -12, 7/3, π</span></p>
+                            <p class="text-gray-300 mt-2"><strong>Variable:</strong> A symbol (usually a letter) which can take various numerical values is called a variable.<br><span class="text-neonGold font-mono text-xs">Example: x, y, z, a, b</span></p>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-black border border-panelBorder">
+                            <h4 class="font-bold text-neonCyan">3. Terms: Like Terms & Unlike Terms (Day 1)</h4>
+                            <p class="text-gray-300 mt-1"><strong>Terms:</strong> Several parts of an algebraic expression separated by $+$ or $-$ signs are called its terms.</p>
+                            <p class="text-gray-300 mt-1"><strong>Like Terms:</strong> Terms having the exact same literal factors (variables with same exponents) are called Like Terms.<br><span class="text-neonGold font-mono text-xs">Example: 5x²y and -9x²y</span></p>
+                            <p class="text-gray-300 mt-1"><strong>Unlike Terms:</strong> Terms having different literal factors (variables) are called Unlike Terms.<br><span class="text-neonGold font-mono text-xs">Example: 4xy and 7x²y</span></p>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-black border border-panelBorder">
+                            <h4 class="font-bold text-neonCyan">4. Types of Algebraic Expressions (Day 2)</h4>
+                            <ul class="space-y-2 mt-1 text-gray-300">
+                                <li>• <strong>Monomial:</strong> An algebraic expression containing only <strong>one term</strong>.<br><span class="text-neonGold font-mono text-xs">Example: 7x, -5ab², 9</span></li>
+                                <li>• <strong>Binomial:</strong> An algebraic expression containing <strong>two unlike terms</strong>.<br><span class="text-neonGold font-mono text-xs">Example: 3x + 5, a² - b²</span></li>
+                                <li>• <strong>Trinomial:</strong> An algebraic expression containing <strong>three unlike terms</strong>.<br><span class="text-neonGold font-mono text-xs">Example: x² + 5x + 6, 2a + 3b - 4c</span></li>
+                                <li>• <strong>Quadrinomial:</strong> An algebraic expression containing <strong>four unlike terms</strong>.<br><span class="text-neonGold font-mono text-xs">Example: x³ + 3x²y + 3xy² + y³</span></li>
+                            </ul>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-black border border-panelBorder">
+                            <h4 class="font-bold text-neonGold">5. Chapter 5 & 6 Important Formulas (Day 6)</h4>
+                            <ul class="space-y-1.5 mt-1 font-mono text-xs text-gray-200">
+                                <li>1. aᵐ × aⁿ = aᵐ⁺ⁿ (Product Law of Exponents)</li>
+                                <li>2. aᵐ ÷ aⁿ = aᵐ⁻ⁿ (Quotient Law of Exponents)</li>
+                                <li>3. (aᵐ)ⁿ = aᵐˣⁿ (Power of a Power Law)</li>
+                                <li>4. a⁰ = 1 (Zero Exponent Identity)</li>
+                                <li>5. (a + b)² = a² + 2ab + b²</li>
+                                <li>6. (a - b)² = a² - 2ab + b²</li>
+                                <li>7. a² - b² = (a + b)(a - b)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ENGLISH TAB CONTENT -->
+                <div id="notesEnglishContent" class="hidden space-y-4">
+                    <div class="bg-neonCyan/10 border border-neonCyan/30 rounded-xl p-3 flex items-center justify-between">
+                        <span class="text-neonCyan font-semibold"><i class="fa-solid fa-feather-pointed mr-1"></i> Chart Paper Layout: Top par Title, Left mein Pic & Bio, Right mein Famous Poem!</span>
+                        <button onclick="copyElementText('englishCopyBlock')" class="px-3 py-1 rounded-lg bg-neonCyan text-black font-bold text-xs shrink-0 hover:bg-cyan-300">
+                            <i class="fa-regular fa-copy mr-1"></i> Copy All
+                        </button>
+                    </div>
+
+                    <div id="englishCopyBlock" class="space-y-4">
+                        <div class="p-4 rounded-xl bg-black border border-panelBorder">
+                            <h4 class="font-bold text-neonCyan text-base">WILLIAM SHAKESPEARE – BIOGRAPHY (Day 3 & 4)</h4>
+                            <ul class="space-y-1.5 mt-2 text-gray-200">
+                                <li>• <strong>Full Name:</strong> William Shakespeare</li>
+                                <li>• <strong>Born:</strong> 23 April 1564, Stratford-upon-Avon, Warwickshire, England</li>
+                                <li>• <strong>Known As:</strong> "The Bard of Avon" and the National Poet of England</li>
+                                <li>• <strong>Parents:</strong> John Shakespeare and Mary Arden</li>
+                                <li>• <strong>Spouse:</strong> Anne Hathaway (Married in 1582)</li>
+                                <li>• <strong>Literary Works:</strong> He wrote <strong>39 plays</strong>, <strong>154 sonnets</strong>, and several narrative poems.</li>
+                                <li>• <strong>Famous Tragedies & Plays:</strong> <em>Hamlet, Macbeth, Romeo and Juliet, Othello, Julius Caesar, The Merchant of Venice</em>.</li>
+                                <li>• <strong>Legacy:</strong> Widely regarded as the greatest writer in the English language and the world's pre-eminent dramatist.</li>
+                                <li>• <strong>Died:</strong> 23 April 1616 (aged 52) at Stratford-upon-Avon.</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-black border border-panelBorder">
+                            <h4 class="font-bold text-neonGold text-base">FAMOUS SHORT POEM FOR CHART PAPER (Day 5)</h4>
+                            <p class="text-xs text-gray-400 mb-2">Option 1: "Under the Greenwood Tree" (Short, sweet & easy to write on chart paper)</p>
+                            <div class="bg-[#090b10] p-3.5 rounded-lg border-l-2 border-neonGold font-serif italic text-gray-100 space-y-1">
+                                <p>Under the greenwood tree</p>
+                                <p>Who loves to lie with me,</p>
+                                <p>And turn his merry note</p>
+                                <p>Unto the sweet bird's throat,</p>
+                                <p>Come hither, come hither, come hither:</p>
+                                <p>Here shall he see</p>
+                                <p>No enemy</p>
+                                <p>But winter and rough weather.</p>
+                                <p class="text-right text-neonGold not-italic font-sans font-bold text-xs pt-2">— William Shakespeare (As You Like It)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. PRE-LOADED 10-DAY HOMEWORK MISSION DATA
+        // ==========================================
+        const DEFAULT_10_DAYS = [
+            {
+                day: 1,
+                tag: "Maths A4 Sheet - Part 1",
+                title: "Algebraic Definitions (Set 1)",
+                subtitle: "Sirf 4 definitions colorful A4 sheet ke upar wale hisse mein likhni hain.",
+                subject: "maths",
+                tasks: [
+                    { id: "d1t1", text: "Ek colorful A4 sheet lo aur upar neat border + 'ALGEBRAIC EXPRESSIONS' heading dalo", done: false },
+                    { id: "d1t2", text: "Write definition & example of 'Algebraic Expression' (4x + 7)", done: false },
+                    { id: "d1t3", text: "Write definitions & examples of 'Constants' and 'Variables'", done: false },
+                    { id: "d1t4", text: "Write definition & example of 'Terms (Like & Unlike Terms)'", done: false }
+                ]
+            },
+            {
+                day: 2,
+                tag: "Maths A4 Sheet - Part 2",
+                title: "Monomial to Quadrinomial (A4 Complete!)",
+                subtitle: "Aaj Maths wali colorful A4 sheet poori khatam ho jayegi!",
+                subject: "maths",
+                tasks: [
+                    { id: "d2t1", text: "Write definition & example of 'Monomial' (1 term) on A4 sheet", done: false },
+                    { id: "d2t2", text: "Write definition & example of 'Binomial' (2 terms) on A4 sheet", done: false },
+                    { id: "d2t3", text: "Write definition & example of 'Trinomial' (3 terms) & 'Quadrinomial' (4 terms)", done: false },
+                    { id: "d2t4", text: "A4 Sheet ko ek baar read karke definitions yaad kar lo (Maths Sheet Done!)", done: false }
+                ]
+            },
+            {
+                day: 3,
+                tag: "English Chart - Part 1",
+                title: "Shakespeare Chart Setup & Picture",
+                subtitle: "Aaj likhne ka bojh nahi, sirf chart ka design aur photo lagani hai.",
+                subject: "english",
+                tasks: [
+                    { id: "d3t1", text: "Chart paper par charo taraf double-line border banao", done: false },
+                    { id: "d3t2", text: "Top center mein bold letters mein 'WILLIAM SHAKESPEARE (1564–1616)' likho", done: false },
+                    { id: "d3t3", text: "William Shakespeare ki picture paste karo ya light pencil sketch banao", done: false }
+                ]
+            },
+            {
+                day: 4,
+                tag: "English Chart - Part 2",
+                title: "Write Shakespeare's Biography",
+                subtitle: "Ready notes kholo aur 7-8 clean bullet points chart par likh do.",
+                subject: "english",
+                tasks: [
+                    { id: "d4t1", text: "Pencil se halki lines kheench lo taaki biography seedhi likhi jaye", done: false },
+                    { id: "d4t2", text: "Write Birth, Parents, Spouse & 'Bard of Avon' points neatly", done: false },
+                    { id: "d4t3", text: "Write his famous plays (Hamlet, Macbeth, Romeo & Juliet) & Death date", done: false }
+                ]
+            },
+            {
+                day: 5,
+                tag: "English Chart - Part 3",
+                title: "Shakespeare Poem & Final Touch",
+                subtitle: "Aaj English ka chart paper 100% complete ho jayega!",
+                subject: "english",
+                tasks: [
+                    { id: "d5t1", text: "Chart ke dusre side box bana kar 'Under the Greenwood Tree' poem likho", done: false },
+                    { id: "d5t2", text: "Headings ko sketch pen ya highlighter se underline karo", done: false },
+                    { id: "d5t3", text: "Chart paper ko safely roll karke rubber band laga kar rakh do", done: false }
+                ]
+            },
+            {
+                day: 6,
+                tag: "Maths Ch-5 Formulas",
+                title: "Learn & Write All Formulas of Ch-5",
+                subtitle: "Exponents / Algebraic formulas ek page par likh kar yaad karne hain.",
+                subject: "maths",
+                tasks: [
+                    { id: "d6t1", text: "Notebook mein Ch-5 ke saare formulas ek jagah note karo", done: false },
+                    { id: "d6t2", text: "Product law, Quotient law aur Power law bina dekhe 2 baar likh kar dekho", done: false },
+                    { id: "d6t3", text: "Saare formulas bol-bol kar 10 minute revise karo", done: false }
+                ]
+            },
+            {
+                day: 7,
+                tag: "Maths Ch-5 Revision",
+                title: "Revise Chapter 5 Properly",
+                subtitle: "Formulas yaad hain, ab bas 5-6 main questions solve karke confidence lao.",
+                subject: "maths",
+                tasks: [
+                    { id: "d7t1", text: "Ch-5 ke solved examples ek baar dhyan se dekho", done: false },
+                    { id: "d7t2", text: "Exercise ke koi bhi 5 important questions rough copy mein solve karo", done: false }
+                ]
+            },
+            {
+                day: 8,
+                tag: "Maths Ch-6 Revision",
+                title: "Revise Chapter 6 (Algebraic Expressions)",
+                subtitle: "Like terms add/subtract karna aur value put karna practice karo.",
+                subject: "maths",
+                tasks: [
+                    { id: "d8t1", text: "Addition & Subtraction of Like Terms ke 4 sums practice karo", done: false },
+                    { id: "d8t2", text: "Ch-6 ke C.W. notebook wale questions ek baar revise karo", done: false }
+                ]
+            },
+            {
+                day: 9,
+                tag: "Notebook Check",
+                title: "Pending C.W. & Quick Polish",
+                subtitle: "Diary mein jo Ch-6 C.W. mention hai usko verify kar lo.",
+                subject: "maths",
+                tasks: [
+                    { id: "d9t1", text: "Check karo ki Maths aur English C.W. copy mein koi page adhura toh nahi", done: false },
+                    { id: "d9t2", text: "A4 Sheet aur Chart Paper par apna Name, Class, Roll No. likho", done: false }
+                ]
+            },
+            {
+                day: 10,
+                tag: "Final Boss Victory",
+                title: "100% Homework Ready & Stress-Free!",
+                subtitle: "Sab kuch pack karo aur chill maaro, tune kar dikhaya bhai!",
+                subject: "english",
+                tasks: [
+                    { id: "d10t1", text: "10 minute Maths definitions & Ch-5 formulas ka final recap", done: false },
+                    { id: "d10t2", text: "Bag mein Chart Paper, A4 Sheet aur Diary pack kar lo", done: false }
+                ]
+            }
+        ];
+
+        // Daily Timeline Slots (24-hr hours)
+        const DAILY_SLOTS = [
+            { id: "slot1", name: "Quiet Morning Slot", timeLabel: "06:00 AM - 09:00 AM", startHour: 6, endHour: 9, tip: "Ghar mein sabse shant time! Chart ya definitions likhne ke liye best." },
+            { id: "slot2", name: "Day / School & Rest Slot", timeLabel: "09:00 AM - 04:00 PM", startHour: 9, endHour: 16, tip: "School ya din ka time. Thoda rest kar aur dimag cool rakh." },
+            { id: "slot3", name: "Evening Stealth Sprint", timeLabel: "04:00 PM - 08:00 PM", startHour: 16, endHour: 20, tip: "Earphones + Peace Shield ON kar aur sirf 20 min mein aaj ka task nipta!" },
+            { id: "slot4", name: "Night Calm Revision", timeLabel: "08:00 PM - 11:30 PM", startHour: 20, endHour: 24, tip: "Sone se pehle 10 min Ch-5 ke formulas dekh le. No heavy tension." }
+        ];
+
+        // ==========================================
+        // 2. APPLICATION STATE & STORAGE
+        // ==========================================
+        let missionDays = [];
+        let currentDayIndex = 0; // 0 to 9
+        let userApiKey = "";
+        let selectedModel = "gemini-2.5-flash";
+        let chatHistory = [];
+        let lastNotifiedSlotId = null;
+
+        function loadState() {
+            const savedDays = localStorage.getItem("dav_mission_10days_v1");
+            if (savedDays) {
+                try {
+                    missionDays = JSON.parse(savedDays);
+                } catch (e) {
+                    missionDays = JSON.parse(JSON.stringify(DEFAULT_10_DAYS));
+                }
+            } else {
+                missionDays = JSON.parse(JSON.stringify(DEFAULT_10_DAYS));
+            }
+
+            const savedDayIdx = localStorage.getItem("dav_mission_active_day");
+            if (savedDayIdx !== null) {
+                currentDayIndex = parseInt(savedDayIdx, 10) || 0;
+            }
+
+            userApiKey = localStorage.getItem("dav_gemini_api_key") || "";
+            selectedModel = localStorage.getItem("dav_gemini_model") || "gemini-2.5-flash";
+
+            document.getElementById("apiKeyInput").value = userApiKey;
+            document.getElementById("geminiModelSelect").value = selectedModel;
+            updateApiKeyBadge();
+        }
+
+        function saveState() {
+            localStorage.setItem("dav_mission_10days_v1", JSON.stringify(missionDays));
+            localStorage.setItem("dav_mission_active_day", String(currentDayIndex));
+        }
+
+        // ==========================================
+        // 3. UI RENDERING (TABS, TASKS, PROGRESS)
+        // ==========================================
+        function renderAll() {
+            renderDayTabs();
+            renderCurrentDayTasks();
+            renderOverallProgress();
+        }
+
+        function renderDayTabs() {
+            const container = document.getElementById("dayTabsContainer");
+            container.innerHTML = "";
+
+            missionDays.forEach((dayObj, idx) => {
+                const total = dayObj.tasks.length;
+                const doneCount = dayObj.tasks.filter(t => t.done).length;
+                const isAllDone = total > 0 && doneCount === total;
+                const isActive = idx === currentDayIndex;
+
+                const btn = document.createElement("button");
+                btn.onclick = () => {
+                    currentDayIndex = idx;
+                    saveState();
+                    renderAll();
+                };
+
+                btn.className = `p-2 rounded-xl border text-center transition-all flex flex-col items-center justify-center relative ${
+                    isActive ? "day-tab-active font-bold" : "bg-black/60 border-panelBorder text-gray-400 hover:border-gray-600 hover:text-white"
+                }`;
+
+                btn.innerHTML = `
+                    <span class="text-[10px] font-mono uppercase">D-${dayObj.day}</span>
+                    <span class="text-xs mt-0.5">${isAllDone ? '<i class="fa-solid fa-circle-check text-neonGreen"></i>' : `${doneCount}/${total}`}</span>
+                `;
+                container.appendChild(btn);
+            });
+
+            document.getElementById("currentDayBadge").textContent = `Day ${missionDays[currentDayIndex].day} Active`;
+        }
+
+        function renderCurrentDayTasks() {
+            const dayObj = missionDays[currentDayIndex];
+            document.getElementById("dayHeaderNumber").textContent = `DAY ${dayObj.day}`;
+            document.getElementById("dayFocusTag").textContent = dayObj.tag;
+            document.getElementById("dayHeaderTitle").textContent = dayObj.title;
+            document.getElementById("dayHeaderSubtitle").textContent = dayObj.subtitle;
+
+            const listEl = document.getElementById("taskListContainer");
+            listEl.innerHTML = "";
+
+            dayObj.tasks.forEach((task) => {
+                const row = document.createElement("div");
+                row.className = `flex items-start justify-between gap-3 p-3.5 rounded-xl border transition-all ${
+                    task.done
+                        ? "bg-neonGreen/5 border-neonGreen/30 text-gray-400"
+                        : "bg-black/80 border-panelBorder hover:border-neonCyan/50 text-gray-100"
+                }`;
+
+                row.innerHTML = `
+                    <label class="flex items-start gap-3 cursor-pointer flex-1 select-none">
+                        <input type="checkbox" ${task.done ? "checked" : ""} onchange="toggleTask('${task.id}')" class="mt-1 w-4 h-4 accent-neonCyan rounded cursor-pointer">
+                        <span class="text-xs sm:text-sm leading-relaxed ${task.done ? "line-through text-gray-500" : "text-gray-100"}">${escapeHtml(task.text)}</span>
+                    </label>
+                    <button onclick="deleteTask('${task.id}')" class="text-gray-600 hover:text-red-400 text-xs px-1.5 py-0.5" title="Remove task">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                listEl.appendChild(row);
+            });
+        }
+
+        function renderOverallProgress() {
+            let totalTasks = 0;
+            let completedTasks = 0;
+
+            missionDays.forEach(d => {
+                totalTasks += d.tasks.length;
+                completedTasks += d.tasks.filter(t => t.done).length;
+            });
+
+            const pct = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+            const xp = completedTasks * 50;
+
+            document.getElementById("overallProgressBar").style.width = `${pct}%`;
+            document.getElementById("overallPercentText").textContent = `${pct}%`;
+            document.getElementById("xpCounter").textContent = `${xp} XP`;
+            document.getElementById("completedCountText").textContent = `${completedTasks} of ${totalTasks} micro-missions done`;
+        }
+
+        function toggleTask(taskId) {
+            const dayObj = missionDays[currentDayIndex];
+            const t = dayObj.tasks.find(item => item.id === taskId);
+            if (!t) return;
+            t.done = !t.done;
+            saveState();
+            renderAll();
+
+            if (t.done) {
+                playVictoryBeep();
+                showToast("MISSION STEP DONE! (+50 XP)", `Shabash mere bhai! "${t.text.slice(0, 48)}..." complete ho gaya!`);
+            }
+        }
+
+        function addCustomTask(e) {
+            e.preventDefault();
+            const input = document.getElementById("newTaskInput");
+            const val = input.value.trim();
+            if (!val) return;
+
+            missionDays[currentDayIndex].tasks.push({
+                id: "custom_" + Date.now(),
+                text: val,
+                done: false
+            });
+            input.value = "";
+            saveState();
+            renderAll();
+        }
+
+        function deleteTask(taskId) {
+            const dayObj = missionDays[currentDayIndex];
+            dayObj.tasks = dayObj.tasks.filter(t => t.id !== taskId);
+            saveState();
+            renderAll();
+        }
+
+        // ==========================================
+        // 4. LIVE CLOCK, TIMELINE & SMART ALERTS
+        // ==========================================
+        function updateLiveClockAndTimeline() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-IN', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById("liveClock").textContent = timeStr;
+
+            const currentHour = now.getHours();
+            let activeSlot = DAILY_SLOTS.find(s => currentHour >= s.startHour && currentHour < s.endHour);
+            if (!activeSlot) {
+                activeSlot = { id: "slot_late", name: "Late Night Rest", timeLabel: "11:30 PM - 06:00 AM", tip: "Bhai ab so ja, kal subah fresh mind se karenge!" };
+            }
+
+            document.getElementById("activeSlotBadge").textContent = activeSlot.name;
+
+            // Render timeline slots only if changed or empty
+            const container = document.getElementById("timelineSlotsContainer");
+            container.innerHTML = "";
+            DAILY_SLOTS.forEach(slot => {
+                const isCurrent = slot.id === activeSlot.id;
+                const div = document.createElement("div");
+                div.className = `p-2.5 rounded-xl border transition-all ${
+                    isCurrent
+                        ? "bg-neonCyan/10 border-neonCyan active-slot-glow"
+                        : "bg-black/50 border-panelBorder opacity-70"
+                }`;
+                div.innerHTML = `
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="font-bold ${isCurrent ? 'text-neonCyan' : 'text-gray-300'}">
+                            ${isCurrent ? '<i class="fa-solid fa-circle-play mr-1"></i>' : ''}${slot.name}
+                        </span>
+                        <span class="font-mono text-[11px] text-gray-400">${slot.timeLabel}</span>
+                    </div>
+                    <p class="text-[11px] text-gray-400 mt-1">${slot.tip}</p>
+                `;
+                container.appendChild(div);
+            });
+
+            // Trigger slot transition alert
+            if (lastNotifiedSlotId !== activeSlot.id) {
+                lastNotifiedSlotId = activeSlot.id;
+                triggerSmartSlotNotification(activeSlot);
+            }
+        }
+
+        function triggerSmartSlotNotification(slot) {
+            const dayObj = missionDays[currentDayIndex];
+            const pending = dayObj.tasks.filter(t => !t.done).length;
+            const msg = `${slot.name} active hai! Day ${dayObj.day} (${dayObj.tag}) mein ${pending} chote tasks bache hain. ${slot.tip}`;
+            showToast(`LIVE TIMELINE: ${slot.name.toUpperCase()}`, msg);
+
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(`Mission Command: ${slot.name}`, { body: msg });
+            }
+        }
+
+        function requestBrowserNotifications() {
+            if (!("Notification" in window)) {
+                showToast("INFO", "In-App Live Toasts are already active!");
+                return;
+            }
+            Notification.requestPermission().then(perm => {
+                if (perm === "granted") {
+                    document.getElementById("notifBtnText").textContent = "Alerts ON";
+                    showToast("ALERTS ENABLED", "Ab har study slot par tere paas live notification aayega!");
+                }
+            });
+        }
+
+        // ==========================================
+        // 5. PEACE SHIELD (WEB AUDIO CALM DRONE)
+        // ==========================================
+        let audioCtx = null;
+        let isPeaceShieldOn = false;
+        let peaceGainNode = null;
+
+        function togglePeaceShield() {
+            if (!isPeaceShieldOn) {
+                startPeaceShieldAudio();
+            } else {
+                stopPeaceShieldAudio();
+            }
+        }
+
+        function startPeaceShieldAudio() {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!audioCtx) audioCtx = new AudioContextClass();
+                if (audioCtx.state === "suspended") audioCtx.resume();
+
+                // Create soothing brown noise + warm 174Hz/256Hz ambient pad to mask household shouting
+                const bufferSize = 2 * audioCtx.sampleRate;
+                const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                let lastOut = 0.0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    output[i] = (lastOut + (0.02 * white)) / 1.02;
+                    lastOut = output[i];
+                    output[i] *= 0.18; // gentle brown noise level
+                }
+
+                const whiteNoise = audioCtx.createBufferSource();
+                whiteNoise.buffer = noiseBuffer;
+                whiteNoise.loop = true;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = "lowpass";
+                filter.frequency.value = 420;
+
+                peaceGainNode = audioCtx.createGain();
+                peaceGainNode.gain.value = 0.35;
+
+                whiteNoise.connect(filter);
+                filter.connect(peaceGainNode);
+                peaceGainNode.connect(audioCtx.destination);
+                whiteNoise.start(0);
+
+                isPeaceShieldOn = true;
+                updatePeaceShieldUI();
+                showToast("PEACE SHIELD ACTIVATED 🎧", "Earphones laga le bhai! Calm ambient sound ghar ke shor ko block kar dega.");
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function stopPeaceShieldAudio() {
+            if (audioCtx) {
+                audioCtx.close();
+                audioCtx = null;
+            }
+            isPeaceShieldOn = false;
+            updatePeaceShieldUI();
+        }
+
+        function updatePeaceShieldUI() {
+            const btn = document.getElementById("peaceShieldBtn");
+            const icon = document.getElementById("peaceIcon");
+            const text = document.getElementById("peaceText");
+            const mini = document.getElementById("shieldMiniStatus");
+
+            if (isPeaceShieldOn) {
+                btn.classList.add("border-neonCyan", "neon-cyan-glow");
+                icon.className = "fa-solid fa-headphones text-neonCyan animate-pulse";
+                text.textContent = "Peace Shield: ON";
+                text.className = "hidden sm:inline text-neonCyan font-bold";
+                mini.textContent = "Mute Sound";
+            } else {
+                btn.classList.remove("border-neonCyan", "neon-cyan-glow");
+                icon.className = "fa-solid fa-headphones text-gray-400";
+                text.textContent = "Peace Shield: OFF";
+                text.className = "hidden sm:inline text-gray-300";
+                mini.textContent = "Calm Sound";
+            }
+        }
+
+        function playVictoryBeep() {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                const ctx = new AudioContextClass();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.09); // E5
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.25);
+            } catch (e) {}
+        }
+
+        // ==========================================
+        // 6. 15-MINUTE FOCUS SPRINT TIMER
+        // ==========================================
+        let sprintSeconds = 15 * 60;
+        let sprintInterval = null;
+
+        function toggleSprintTimer() {
+            const btn = document.getElementById("sprintStartBtn");
+            if (sprintInterval) {
+                clearInterval(sprintInterval);
+                sprintInterval = null;
+                btn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> Resume Sprint';
+            } else {
+                sprintInterval = setInterval(() => {
+                    if (sprintSeconds > 0) {
+                        sprintSeconds--;
+                        updateSprintDisplay();
+                    } else {
+                        clearInterval(sprintInterval);
+                        sprintInterval = null;
+                        playVictoryBeep();
+                        showToast("15-MIN SPRINT COMPLETE! 🏆", "Boht hard bhai! Tune 15 minute bina ruke focus kiya. Ab 5 min paani pee ke break le.");
+                        resetSprintTimer();
+                    }
+                }, 1000);
+                btn.innerHTML = '<i class="fa-solid fa-pause mr-1"></i> Pause Sprint';
+            }
+        }
+
+        function resetSprintTimer() {
+            if (sprintInterval) {
+                clearInterval(sprintInterval);
+                sprintInterval = null;
+            }
+            sprintSeconds = 15 * 60;
+            updateSprintDisplay();
+            document.getElementById("sprintStartBtn").innerHTML = '<i class="fa-solid fa-play mr-1"></i> Start 15-Min Sprint';
+        }
+
+        function updateSprintDisplay() {
+            const m = String(Math.floor(sprintSeconds / 60)).padStart(2, "0");
+            const s = String(sprintSeconds % 60).padStart(2, "0");
+            document.getElementById("sprintTimerDisplay").textContent = `${m}:${s}`;
+        }
+
+        // ==========================================
+        // 7. GEMINI API & LIVE AI STUDY BROTHER
+        // ==========================================
+        function toggleApiModal() {
+            const modal = document.getElementById("apiModal");
+            modal.classList.toggle("hidden");
+        }
+
+        function toggleKeyVisibility() {
+            const inp = document.getElementById("apiKeyInput");
+            const icon = document.getElementById("eyeIcon");
+            if (inp.type === "password") {
+                inp.type = "text";
+                icon.className = "fa-regular fa-eye-slash";
+            } else {
+                inp.type = "password";
+                icon.className = "fa-regular fa-eye";
+            }
+        }
+
+        function saveApiKey() {
+            userApiKey = document.getElementById("apiKeyInput").value.trim();
+            selectedModel = document.getElementById("geminiModelSelect").value;
+            localStorage.setItem("dav_gemini_api_key", userApiKey);
+            localStorage.setItem("dav_gemini_model", selectedModel);
+            updateApiKeyBadge();
+            toggleApiModal();
+            showToast("GEMINI API SAVED", userApiKey ? "Teri personal Gemini API key connect ho gayi hai!" : "Built-in / Smart Fallback Mode active!");
+            syncLiveTimelineWithAI();
+        }
+
+        function clearApiKey() {
+            userApiKey = "";
+            document.getElementById("apiKeyInput").value = "";
+            localStorage.removeItem("dav_gemini_api_key");
+            updateApiKeyBadge();
+            showToast("KEY CLEARED", "Switched to Built-in Smart Brother mode.");
+        }
+
+        function updateApiKeyBadge() {
+            const lbl = document.getElementById("apiStatusLabel");
+            const sub = document.getElementById("aiSubStatus");
+            if (userApiKey && userApiKey.length > 8) {
+                lbl.textContent = "API Key: Connected";
+                sub.textContent = `Live Gemini (${selectedModel}) Connected`;
+            } else {
+                lbl.textContent = "Set Gemini API";
+                sub.textContent = "Ready (Click 'Set Gemini API' to add your key)";
+            }
+        }
+
+        function appendChatBubble(sender, htmlText) {
+            const box = document.getElementById("chatMessages");
+            const wrap = document.createElement("div");
+
+            if (sender === "user") {
+                wrap.className = "flex justify-end";
+                wrap.innerHTML = `
+                    <div class="max-w-[85%] bg-neonCyan text-black font-medium px-3.5 py-2 rounded-2xl rounded-tr-xs text-xs leading-relaxed">
+                        ${escapeHtml(htmlText)}
+                    </div>
+                `;
+            } else {
+                wrap.className = "flex justify-start";
+                wrap.innerHTML = `
+                    <div class="max-w-[90%] bg-[#11141c] border border-panelBorder text-gray-200 px-3.5 py-2.5 rounded-2xl rounded-tl-xs text-xs leading-relaxed space-y-1">
+                        <div class="text-[10px] font-mono text-neonCyan font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-bolt"></i> AI BADE BHAI
+                        </div>
+                        <div>${formatSimpleMarkdown(htmlText)}</div>
+                    </div>
+                `;
+            }
+
+            box.appendChild(wrap);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function callGeminiAPI(userPrompt) {
+            const nowStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+            const dayObj = missionDays[currentDayIndex];
+            const doneTasks = dayObj.tasks.filter(t => t.done).map(t => t.text);
+            const pendingTasks = dayObj.tasks.filter(t => !t.done).map(t => t.text);
+
+            const systemContext = `You are a warm, caring older brother ("Bade Bhai") speaking in natural Hinglish to a school student from DAV Public School.
+At his home, there are often arguments/noise ("ghar me ladai/shor"), so keep him calm, zero-stress, and help him complete his 10-Day Homework plan in tiny, easy steps.
+Current IST Time: ${nowStr}.
+Currently Selected Day: Day ${dayObj.day} - ${dayObj.title} (${dayObj.tag}).
+Completed tasks today: ${doneTasks.length ? doneTasks.join("; ") : "None yet"}.
+Pending tasks today: ${pendingTasks.length ? pendingTasks.join("; ") : "All done for today!"}.
+Keep your response concise (3-5 short sentences or bullet points), super encouraging, practical, and directly helpful.`;
+
+            const apiKey = userApiKey || ""; // Uses user's saved key or environment fallback
+            const modelToUse = userApiKey ? selectedModel : "gemini-3-flash-preview";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemContext }] }
+            };
+
+            // Exponential backoff retry
+            let delay = 1000;
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (text) return text;
+                    }
+                } catch (err) {
+                    // continue to retry or fallback
+                }
+                await new Promise(r => setTimeout(r, delay));
+                delay *= 2;
+            }
+
+            // Smart Offline Brother Fallback if user hasn't entered an API key or is offline
+            return generateSmartOfflineReply(userPrompt, dayObj, pendingTasks, nowStr);
+        }
+
+        function generateSmartOfflineReply(prompt, dayObj, pendingTasks, nowStr) {
+            const q = prompt.toLowerCase();
+            if (q.includes("shakespeare") || q.includes("chart") || q.includes("english")) {
+                return `Bhai, **Shakespeare Chart** bilkul easy hai! Upar **'Show Ready Notes'** button daba—maine wahan unka Birth (23 April 1564), Famous Plays (*Hamlet, Macbeth*) aur *'Under the Greenwood Tree'* poem ready rakhi hai. Bas dekh ke chart par utaar le!`;
+            }
+            if (q.includes("algebra") || q.includes("monomial") || q.includes("maths") || q.includes("ch-5")) {
+                return `Maths A4 sheet ke liye bilkul tension mat le! **Monomial** matlab 1 term (jaise *7x*), **Binomial** matlab 2 terms (*3x + 5*), **Trinomial** matlab 3 terms. Upar **'Show Ready Notes'** khol, saari definitions with examples copy karne ke liye taiyar hain!`;
+            }
+            if (q.includes("shor") || q.includes("ladai") || q.includes("focus")) {
+                return `Samajh sakta hoon bhai, jab ghar mein shor ho toh dimag kharab hota hai. Ek kaam kar: upar **'Peace Shield'** button ON kar aur earphones laga le. Sirf **15-Min Sprint Timer** chala aur aaj ka sirf 1 chota point: *"${pendingTasks[0] || 'Revision'}"* khatam kar! Main tere saath hoon.`;
+            }
+            return `Abhi **${nowStr}** baj rahe hain! Hum **Day ${dayObj.day} (${dayObj.tag})** par hain. ${
+                pendingTasks.length > 0
+                    ? `Abhi bas yeh chota sa kaam pakad: **"${pendingTasks[0]}"**. Earphones laga, duniya ko ignore kar aur 10 minute mein isko tick kar de!`
+                    : `Wah mere sher! Aaj ke saare tasks poore ho gaye! Ab aaram kar ya agle din ka 1 chota task dekh le.`
+            }`;
+        }
+
+        async function handleUserChat(e) {
+            e.preventDefault();
+            const input = document.getElementById("chatInput");
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = "";
+            appendChatBubble("user", text);
+
+            const sendBtn = document.getElementById("sendChatBtn");
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+            const reply = await callGeminiAPI(text);
+            appendChatBubble("ai", reply);
+
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById("chatInput").value = promptText;
+            handleUserChat(new Event("submit"));
+        }
+
+        async function syncLiveTimelineWithAI() {
+            const btn = document.getElementById("syncBtn");
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing...';
+
+            const dayObj = missionDays[currentDayIndex];
+            const pendingCount = dayObj.tasks.filter(t => !t.done).length;
+            const prompt = `Live Timeline Sync: Check current IST time and my Day ${dayObj.day} progress (${pendingCount} tasks left). Send me a short, high-energy brotherly check-in message telling me what single small step to do right now in the next 15 minutes.`;
+
+            const reply = await callGeminiAPI(prompt);
+            appendChatBubble("ai", reply);
+            showToast(`LIVE TIMELINE SYNCED (DAY ${dayObj.day})`, reply.replace(/\*\*/g, "").slice(0, 140) + "...");
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Sync Live Timeline';
+        }
+
+        // ==========================================
+        // 8. STUDY NOTES MODAL & CLIPBOARD HELPERS
+        // ==========================================
+        function openNotesModal(mode) {
+            const modal = document.getElementById("notesModal");
+            modal.classList.remove("hidden");
+
+            if (mode === "english" || (mode === "current" && missionDays[currentDayIndex].subject === "english")) {
+                switchNotesTab("english");
+            } else {
+                switchNotesTab("maths");
+            }
+        }
+
+        function closeNotesModal() {
+            document.getElementById("notesModal").classList.add("hidden");
+        }
+
+        function switchNotesTab(tab) {
+            const mathsContent = document.getElementById("notesMathsContent");
+            const engContent = document.getElementById("notesEnglishContent");
+            const btnMaths = document.getElementById("tabBtnMaths");
+            const btnEng = document.getElementById("tabBtnEnglish");
+
+            if (tab === "english") {
+                mathsContent.classList.add("hidden");
+                engContent.classList.remove("hidden");
+                btnEng.className = "px-4 py-2 text-xs font-bold border-b-2 border-neonCyan text-neonCyan";
+                btnMaths.className = "px-4 py-2 text-xs font-bold border-b-2 border-transparent text-gray-400 hover:text-white";
+            } else {
+                engContent.classList.add("hidden");
+                mathsContent.classList.remove("hidden");
+                btnMaths.className = "px-4 py-2 text-xs font-bold border-b-2 border-neonGold text-neonGold";
+                btnEng.className = "px-4 py-2 text-xs font-bold border-b-2 border-transparent text-gray-400 hover:text-white";
+            }
+        }
+
+        function copyElementText(elementId) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const temp = document.createElement("textarea");
+            temp.value = el.innerText;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            showToast("COPIED TO CLIPBOARD! 📋", "Saare notes copy ho gaye hain, ab aaram se dekh kar sheet par likh le.");
+        }
+
+        // ==========================================
+        // 9. UTILITIES & INITIALIZATION
+        // ==========================================
+        let toastTimeout = null;
+        function showToast(title, message) {
+            const toast = document.getElementById("liveToast");
+            document.getElementById("toastTitle").textContent = title;
+            document.getElementById("toastMessage").textContent = message;
+            toast.classList.remove("hidden");
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add("hidden");
+            }, 6500);
+        }
+
+        function hideToast() {
+            document.getElementById("liveToast").classList.add("hidden");
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, m => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[m]));
+        }
+
+        function formatSimpleMarkdown(text) {
+            let safe = escapeHtml(text);
+            safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong class="text-neonCyan">$1</strong>');
+            safe = safe.replace(/\*(.*?)\*/g, '<em class="text-neonGold">$1</em>');
+            safe = safe.replace(/\n/g, '<br>');
+            return safe;
+        }
+
+        window.onload = function () {
+            loadState();
+            renderAll();
+            updateLiveClockAndTimeline();
+            setInterval(updateLiveClockAndTimeline, 1000);
+
+            // Welcome message from AI Brother on startup
+            const dayObj = missionDays[currentDayIndex];
+            appendChatBubble(
+                "ai",
+                `Aur mere sher! बिल्कुल टेंशन मत ले। Maine teri DAV diary ka **English (Shakespeare Chart)** aur **Maths (A4 Sheet + Ch-5/6)** ka poora kaam **10-Days** ke chote-chote steps mein set kar diya hai.\n\n**Tip:** Upar **'Peace Shield'** button daba ke earphones laga le taaki ghar ka shor sunai na de, aur **'Show Ready Notes'** se dekh kar **Day ${dayObj.day}** ka pehla point shuru kar! Jab chahe upar **Gemini API** button se apni key daal sakta hai.`
+            );
+        };
+    </script>
+</body>
+</html>
